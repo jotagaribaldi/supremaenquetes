@@ -6,15 +6,8 @@ import {
   IsLongitude,
   IsIn,
   IsIP,
-  IsEnum,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum VoteType {
-  CANDIDATE = 'CANDIDATE',
-  NULL_BLANK = 'NULL_BLANK',
-  UNDECIDED = 'UNDECIDED',
-}
 
 export class CreateResponseDto {
   @ApiProperty({ example: 'uuid-da-enquete' })
@@ -47,50 +40,25 @@ export class CreateResponseDto {
   @IsString()
   governorVote?: string;
 
-  @ApiProperty({ enum: VoteType, default: VoteType.CANDIDATE, required: false })
-  @IsOptional()
-  @IsEnum(VoteType)
-  governorVoteType?: VoteType;
-
   @ApiProperty({ example: 'Candidato B', required: false })
   @IsOptional()
   @IsString()
   presidentVote?: string;
-
-  @ApiProperty({ enum: VoteType, default: VoteType.CANDIDATE, required: false })
-  @IsOptional()
-  @IsEnum(VoteType)
-  presidentVoteType?: VoteType;
 
   @ApiProperty({ example: 'Candidato C', required: false })
   @IsOptional()
   @IsString()
   senatorVote?: string;
 
-  @ApiProperty({ enum: VoteType, default: VoteType.CANDIDATE, required: false })
-  @IsOptional()
-  @IsEnum(VoteType)
-  senatorVoteType?: VoteType;
-
   @ApiProperty({ example: 'Candidato D', required: false })
   @IsOptional()
   @IsString()
   stateDeputyVote?: string;
 
-  @ApiProperty({ enum: VoteType, default: VoteType.CANDIDATE, required: false })
-  @IsOptional()
-  @IsEnum(VoteType)
-  stateDeputyVoteType?: VoteType;
-
   @ApiProperty({ example: 'Candidato E', required: false })
   @IsOptional()
   @IsString()
   federalDeputyVote?: string;
-
-  @ApiProperty({ enum: VoteType, default: VoteType.CANDIDATE, required: false })
-  @IsOptional()
-  @IsEnum(VoteType)
-  federalDeputyVoteType?: VoteType;
 
   @ApiProperty({ example: '192.168.1.1' })
   @IsIP()

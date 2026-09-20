@@ -21,15 +21,10 @@ const responseSchema = z.object({
   ageRange: z.enum(['16-24', '25-34', '35-44', '45-59', '60+']).or(z.literal('')),
   education: z.enum(['Ensino Fundamental', 'Ensino Médio', 'Ensino Superior']).or(z.literal('')),
   governorVote: z.string().optional(),
-  governorVoteType: z.enum(['CANDIDATE', 'NULL_BLANK', 'UNDECIDED']).optional(),
   presidentVote: z.string().optional(),
-  presidentVoteType: z.enum(['CANDIDATE', 'NULL_BLANK', 'UNDECIDED']).optional(),
   senatorVote: z.string().optional(),
-  senatorVoteType: z.enum(['CANDIDATE', 'NULL_BLANK', 'UNDECIDED']).optional(),
   stateDeputyVote: z.string().optional(),
-  stateDeputyVoteType: z.enum(['CANDIDATE', 'NULL_BLANK', 'UNDECIDED']).optional(),
   federalDeputyVote: z.string().optional(),
-  federalDeputyVoteType: z.enum(['CANDIDATE', 'NULL_BLANK', 'UNDECIDED']).optional(),
   ipAddress: z.string(),
   latitude: z.number(),
   longitude: z.number(),
@@ -62,12 +57,18 @@ const tocantinsOptions = [
   { value: 'Não', label: 'Não' },
 ];
 
-type VoteType = 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED';
-
-const voteTypeOptions: { value: VoteType; label: string }[] = [
-  { value: 'NULL_BLANK', label: 'Voto Nulo/Branco' },
+// Special candidate options that appear at the top of each dropdown
+const specialCandidateOptions = [
+  { value: 'NULL_BLANK', label: 'Voto Nulo / Branco' },
   { value: 'UNDECIDED', label: 'Não sei / Não respondeu' },
 ];
+
+function getCandidateOptions(candidates: any[]) {
+  return [
+    ...specialCandidateOptions,
+    ...candidates.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))
+  ];
+}
 
 export default function PublicSurveyPage() {
   const params = useParams();
@@ -110,15 +111,10 @@ export default function PublicSurveyPage() {
       ageRange: '',
       education: '',
       governorVote: '',
-      governorVoteType: 'CANDIDATE',
       presidentVote: '',
-      presidentVoteType: 'CANDIDATE',
       senatorVote: '',
-      senatorVoteType: 'CANDIDATE',
       stateDeputyVote: '',
-      stateDeputyVoteType: 'CANDIDATE',
       federalDeputyVote: '',
-      federalDeputyVoteType: 'CANDIDATE',
       ipAddress: '',
       latitude: 0,
       longitude: 0,
@@ -336,10 +332,7 @@ export default function PublicSurveyPage() {
                         label="Governador"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar governador..."
-                        options={candidates.governor.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        voteTypeOptions={voteTypeOptions}
-                        voteTypeValue={watch('governorVoteType')}
-                        onVoteTypeChange={(vt: 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED') => setValue('governorVoteType', vt, { shouldValidate: true })}
+                        options={getCandidateOptions(candidates.governor)}
                         {...field}
                       />
                     )}
@@ -352,10 +345,7 @@ export default function PublicSurveyPage() {
                         label="Presidente"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar presidente..."
-                        options={candidates.president?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
-                        voteTypeOptions={voteTypeOptions}
-                        voteTypeValue={watch('presidentVoteType')}
-                        onVoteTypeChange={(vt: 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED') => setValue('presidentVoteType', vt, { shouldValidate: true })}
+                        options={getCandidateOptions(candidates.president || [])}
                         {...field}
                       />
                     )}
@@ -368,10 +358,7 @@ export default function PublicSurveyPage() {
                         label="Senador"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar senador..."
-                        options={candidates.senator.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        voteTypeOptions={voteTypeOptions}
-                        voteTypeValue={watch('senatorVoteType')}
-                        onVoteTypeChange={(vt: 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED') => setValue('senatorVoteType', vt, { shouldValidate: true })}
+                        options={getCandidateOptions(candidates.senator)}
                         {...field}
                       />
                     )}
@@ -384,10 +371,7 @@ export default function PublicSurveyPage() {
                         label="Deputado Federal"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar deputado federal..."
-                        options={candidates.federalDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        voteTypeOptions={voteTypeOptions}
-                        voteTypeValue={watch('federalDeputyVoteType')}
-                        onVoteTypeChange={(vt: 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED') => setValue('federalDeputyVoteType', vt, { shouldValidate: true })}
+                        options={getCandidateOptions(candidates.federalDeputy)}
                         {...field}
                       />
                     )}
@@ -400,10 +384,7 @@ export default function PublicSurveyPage() {
                         label="Deputado Estadual"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar deputado estadual..."
-                        options={candidates.stateDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        voteTypeOptions={voteTypeOptions}
-                        voteTypeValue={watch('stateDeputyVoteType')}
-                        onVoteTypeChange={(vt: 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED') => setValue('stateDeputyVoteType', vt, { shouldValidate: true })}
+                        options={getCandidateOptions(candidates.stateDeputy)}
                         {...field}
                       />
                     )}

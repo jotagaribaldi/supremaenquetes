@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-type VoteType = 'CANDIDATE' | 'NULL_BLANK' | 'UNDECIDED';
-
 interface SearchableSelectProps {
   label?: string;
   error?: string;
@@ -16,23 +14,18 @@ interface SearchableSelectProps {
   value?: string;
   id?: string;
   className?: string;
-  voteTypeOptions?: { value: VoteType; label: string }[];
-  onVoteTypeChange?: (voteType: VoteType) => void;
-  voteTypeValue?: VoteType;
 }
 
 export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectProps>(
-  ({ className, label, error, options, placeholder, searchPlaceholder = 'Buscar...', onChange, value = '', id, onBlur, voteTypeOptions = [], onVoteTypeChange, voteTypeValue, ...props }, ref) => {
+  ({ className, label, error, options, placeholder, searchPlaceholder = 'Buscar...', onChange, value = '', id, onBlur, ...props }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedValue, setSelectedValue] = useState(value);
     const [selectedLabel, setSelectedLabel] = useState('');
-    const [selectedVoteType, setSelectedVoteType] = useState(voteTypeValue || 'CANDIDATE');
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const hiddenInputRef = useRef<HTMLInputElement>(null);
-    const hiddenVoteTypeRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
       if (ref) {
@@ -46,43 +39,21 @@ export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectPro
 
     const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
-    const allOptions = [
-      ...(voteTypeOptions.length > 0 ? voteTypeOptions : []),
-      ...options,
-    ];
-
-    const filteredOptions = allOptions.filter(opt =>
+    const filteredOptions = options.filter(opt =>
       opt.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
       opt.value.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handleSelect = (option: { value: string; label: string }) => {
-      const isVoteTypeOption = voteTypeOptions.some(v => v.value === option.value);
-      const voteTypeValue = option.value as VoteType;
-      
-      if (isVoteTypeOption) {
-        setSelectedVoteType(voteTypeValue);
-        setSelectedValue('');
-        setSelectedLabel(option.label);
-        onVoteTypeChange?.(voteTypeValue);
-        onChange?.('');
-      } else {
-        setSelectedValue(option.value);
-        setSelectedLabel(option.label);
-        setSelectedVoteType('CANDIDATE');
-        onVoteTypeChange?.('CANDIDATE');
-        onChange?.(option.value);
-      }
+      setSelectedValue(option.value);
+      setSelectedLabel(option.label);
       setSearchQuery('');
       setIsOpen(false);
       if (hiddenInputRef.current) {
-        hiddenInputRef.current.value = isVoteTypeOption ? '' : option.value;
+        hiddenInputRef.current.value = option.value;
         hiddenInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      if (hiddenVoteTypeRef.current) {
-        hiddenVoteTypeRef.current.value = selectedVoteType;
-        hiddenVoteTypeRef.current.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+      onChange?.(option.value);
       onBlur?.(undefined as any);
       inputRef.current?.blur();
     };
@@ -93,10 +64,6 @@ export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectPro
 
     const handleHiddenBlur = (e: React.FocusEvent<HTMLInputElement>) => {
       onBlur?.(e);
-    };
-
-    const handleHiddenVoteTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      onVoteTypeChange?.(e.target.value as VoteType);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,18 +91,15 @@ export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectPro
     }, []);
 
     useEffect(() => {
-      const option = allOptions.find(o => o.value === value);
+      const option = options.find(o => o.value === value);
       if (option) {
         setSelectedLabel(option.label);
         setSelectedValue(option.value);
-        const isVoteTypeOption = voteTypeOptions.some(v => v.value === option.value);
-        setSelectedVoteType(isVoteTypeOption ? (option.value as VoteType) : 'CANDIDATE');
       } else if (!value) {
         setSelectedLabel('');
         setSelectedValue('');
-        setSelectedVoteType('CANDIDATE');
       }
-    }, [value, voteTypeValue, allOptions]);
+    }, [value, options]);
 
     const displayValue = selectedLabel || (placeholder ? placeholder : 'Selecione');
 
@@ -150,13 +114,6 @@ export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectPro
           onChange={handleHiddenChange}
           onBlur={handleHiddenBlur}
           {...props}
-        />
-        <input
-          ref={hiddenVoteTypeRef}
-          type="hidden"
-          name={`${selectId}VoteType`}
-          value={selectedVoteType}
-          onChange={handleHiddenVoteTypeChange}
         />
         {label && (
           <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-1">
@@ -225,33 +182,24 @@ export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectPro
               {searchQuery && filteredOptions.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">Nenhuma opção encontrada</div>
               ) : (
-                filteredOptions.map((option) => {
-                  const isVoteTypeOption = voteTypeOptions.some(v => v.value === option.value);
-                  return (
-                    <div
-                      key={option.value}
-                      className={cn(
-                        'px-3 py-2 text-sm cursor-pointer hover:bg-gray-100',
-                        selectedValue === option.value && !isVoteTypeOption && 'bg-primary-50 text-primary-700 font-medium',
-                        isVoteTypeOption && selectedVoteType === option.value && 'bg-primary-50 text-primary-700 font-medium',
-                        isVoteTypeOption && 'bg-gray-50 text-gray-700'
-                      )}
-                      role="option"
-                      aria-selected={
-                        isVoteTypeOption
-                          ? selectedVoteType === option.value
-                          : selectedValue === option.value
-                      }
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleSelect(option);
-                      }}
-                    >
-                      {option.label}
-                    </div>
-                  );
-                })
+                filteredOptions.map((option) => (
+                  <div
+                    key={option.value}
+                    className={cn(
+                      'px-3 py-2 text-sm cursor-pointer hover:bg-gray-100',
+                      selectedValue === option.value && 'bg-primary-50 text-primary-700 font-medium'
+                    )}
+                    role="option"
+                    aria-selected={selectedValue === option.value}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSelect(option);
+                    }}
+                  >
+                    {option.label}
+                  </div>
+                ))
               )}
             </div>
           )}
