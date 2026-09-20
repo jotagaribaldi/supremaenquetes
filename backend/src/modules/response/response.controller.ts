@@ -22,7 +22,12 @@ export class ResponseController {
   @Post()
   @ApiOperation({ summary: 'Enviar resposta para enquete (público)' })
   async create(@Body() dto: CreateResponseDto) {
-    return this.responseService.create(dto);
+    try {
+      return await this.responseService.create(dto);
+    } catch (error) {
+      console.error('Error creating response:', error);
+      throw error;
+    }
   }
 
   @Get('survey/:surveyId')

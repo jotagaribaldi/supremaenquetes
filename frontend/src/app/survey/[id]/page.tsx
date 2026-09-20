@@ -16,15 +16,18 @@ import { Loader2, CheckCircle, MapPin, AlertCircle, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 const responseSchema = z.object({
-  tocantinsVote: z.enum(['Sim', 'Não']).or(z.literal('')),
-  gender: z.enum(['Masculino', 'Feminino']).or(z.literal('')),
-  ageRange: z.enum(['16-24', '25-34', '35-44', '45-59', '60+']).or(z.literal('')),
-  education: z.enum(['Ensino Fundamental', 'Ensino Médio', 'Ensino Superior']).or(z.literal('')),
-  governorVote: z.string().optional(),
-  presidentVote: z.string().optional(),
-  senatorVote: z.string().optional(),
-  stateDeputyVote: z.string().optional(),
-  federalDeputyVote: z.string().optional(),
+  tocantinsVote: z.enum(['Sim', 'Não']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+  gender: z.enum(['Masculino', 'Feminino']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+  ageRange: z.enum(['16-24', '25-34', '35-44', '45-59', '60+']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+  education: z.enum(['Ensino Fundamental', 'Ensino Médio', 'Ensino Superior']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+  governorVote: z.string().min(1, 'Selecione um candidato'),
+  governorRejection: z.string().min(1, 'Selecione um candidato'),
+  presidentVote: z.string().min(1, 'Selecione um candidato'),
+  presidentRejection: z.string().min(1, 'Selecione um candidato'),
+  senatorVote: z.string().min(1, 'Selecione um candidato'),
+  senatorVote2: z.string().min(1, 'Selecione um candidato'),
+  stateDeputyVote: z.string().min(1, 'Selecione um candidato'),
+  federalDeputyVote: z.string().min(1, 'Selecione um candidato'),
   ipAddress: z.string(),
   latitude: z.number(),
   longitude: z.number(),
@@ -56,19 +59,6 @@ const tocantinsOptions = [
   { value: 'Sim', label: 'Sim' },
   { value: 'Não', label: 'Não' },
 ];
-
-// Special candidate options that appear at the top of each dropdown
-const specialCandidateOptions = [
-  { value: 'NULL_BLANK', label: 'Voto Nulo / Branco' },
-  { value: 'UNDECIDED', label: 'Não sei / Não respondeu' },
-];
-
-function getCandidateOptions(candidates: any[]) {
-  return [
-    ...specialCandidateOptions,
-    ...candidates.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))
-  ];
-}
 
 export default function PublicSurveyPage() {
   const params = useParams();
@@ -111,15 +101,18 @@ export default function PublicSurveyPage() {
       ageRange: '',
       education: '',
       governorVote: '',
+      governorRejection: '',
       presidentVote: '',
+      presidentRejection: '',
       senatorVote: '',
+      senatorVote2: '',
       stateDeputyVote: '',
       federalDeputyVote: '',
       ipAddress: '',
       latitude: 0,
       longitude: 0,
       surveyId,
-    },
+    } as unknown as ResponseForm,
   });
 
   useEffect(() => {
@@ -329,39 +322,90 @@ export default function PublicSurveyPage() {
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
-                        label="Governador"
+                        label="Governador (voto)"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar governador..."
-                        options={getCandidateOptions(candidates.governor)}
+                        options={candidates.governor.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                         {...field}
                       />
                     )}
+                  />
+                  <Controller
+                    name="governorRejection"
+                    control={control}
+                    render={({ field }) => {
+                      const selectedGovernor = watch('governorVote');
+                      const filteredGovernors = candidates.governor.filter(c => c.urnName !== selectedGovernor);
+                      return (
+                        <SearchableSelect
+                          label="Governador (rejeição - não votaria em hipótese alguma)"
+                          placeholder="Selecione o candidato que NÃO votaria"
+                          searchPlaceholder="Buscar governador para rejeição..."
+                          options={filteredGovernors.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                          {...field}
+                        />
+                      );
+                    }}
                   />
                   <Controller
                     name="presidentVote"
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
-                        label="Presidente"
+                        label="Presidente (voto)"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar presidente..."
-                        options={getCandidateOptions(candidates.president || [])}
+                        options={candidates.president?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
                         {...field}
                       />
                     )}
+                  />
+                  <Controller
+                    name="presidentRejection"
+                    control={control}
+                    render={({ field }) => {
+                      const selectedPresident = watch('presidentVote');
+                      const filteredPresidents = (candidates.president || []).filter(c => c.urnName !== selectedPresident);
+                      return (
+                        <SearchableSelect
+                          label="Presidente (rejeição - não votaria em hipótese alguma)"
+                          placeholder="Selecione o candidato que NÃO votaria"
+                          searchPlaceholder="Buscar presidente para rejeição..."
+                          options={filteredPresidents.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                          {...field}
+                        />
+                      );
+                    }}
                   />
                   <Controller
                     name="senatorVote"
                     control={control}
                     render={({ field }) => (
                       <SearchableSelect
-                        label="Senador"
-                        placeholder="Selecione o candidato"
+                        label="Senador (1º voto)"
+                        placeholder="Selecione o 1º senador"
                         searchPlaceholder="Buscar senador..."
-                        options={getCandidateOptions(candidates.senator)}
+                        options={candidates.senator.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                         {...field}
                       />
                     )}
+                  />
+                  <Controller
+                    name="senatorVote2"
+                    control={control}
+                    render={({ field }) => {
+                      const firstSenator = watch('senatorVote');
+                      const filteredSenators = candidates.senator.filter(c => c.urnName !== firstSenator);
+                      return (
+                        <SearchableSelect
+                          label="Senador (2º voto)"
+                          placeholder="Selecione o 2º senador"
+                          searchPlaceholder="Buscar senador..."
+                          options={filteredSenators.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                          {...field}
+                        />
+                      );
+                    }}
                   />
                   <Controller
                     name="federalDeputyVote"
@@ -371,7 +415,7 @@ export default function PublicSurveyPage() {
                         label="Deputado Federal"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar deputado federal..."
-                        options={getCandidateOptions(candidates.federalDeputy)}
+                        options={candidates.federalDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                         {...field}
                       />
                     )}
@@ -384,7 +428,7 @@ export default function PublicSurveyPage() {
                         label="Deputado Estadual"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar deputado estadual..."
-                        options={getCandidateOptions(candidates.stateDeputy)}
+                        options={candidates.stateDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                         {...field}
                       />
                     )}

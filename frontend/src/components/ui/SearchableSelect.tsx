@@ -182,9 +182,9 @@ export const SearchableSelect = forwardRef<HTMLInputElement, SearchableSelectPro
               {searchQuery && filteredOptions.length === 0 ? (
                 <div className="px-3 py-2 text-sm text-gray-500">Nenhuma opção encontrada</div>
               ) : (
-                filteredOptions.map((option) => (
+                filteredOptions.map((option, index) => (
                   <div
-                    key={option.value}
+                    key={`${option.value}-${index}`}
                     className={cn(
                       'px-3 py-2 text-sm cursor-pointer hover:bg-gray-100',
                       selectedValue === option.value && 'bg-primary-50 text-primary-700 font-medium'

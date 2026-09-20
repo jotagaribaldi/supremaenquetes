@@ -40,15 +40,30 @@ export class CreateResponseDto {
   @IsString()
   governorVote?: string;
 
+  @ApiProperty({ example: 'Candidato A', required: false, description: 'Candidato que NÃO votaria em hipótese alguma' })
+  @IsOptional()
+  @IsString()
+  governorRejection?: string;
+
   @ApiProperty({ example: 'Candidato B', required: false })
   @IsOptional()
   @IsString()
   presidentVote?: string;
 
+  @ApiProperty({ example: 'Candidato B', required: false, description: 'Candidato que NÃO votaria em hipótese alguma' })
+  @IsOptional()
+  @IsString()
+  presidentRejection?: string;
+
   @ApiProperty({ example: 'Candidato C', required: false })
   @IsOptional()
   @IsString()
   senatorVote?: string;
+
+  @ApiProperty({ example: 'Candidato C2', required: false })
+  @IsOptional()
+  @IsString()
+  senatorVote2?: string;
 
   @ApiProperty({ example: 'Candidato D', required: false })
   @IsOptional()
