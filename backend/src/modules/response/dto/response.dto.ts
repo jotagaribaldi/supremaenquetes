@@ -70,6 +70,11 @@ export class CreateResponseDto {
   @IsString()
   stateDeputyVote?: string;
 
+  @ApiProperty({ example: 'Candidato D', required: false, description: 'Deputado estadual em reeleição que NÃO votaria em hipótese alguma' })
+  @IsOptional()
+  @IsString()
+  stateDeputyReelectionRejection?: string;
+
   @ApiProperty({ example: 'Candidato E', required: false })
   @IsOptional()
   @IsString()

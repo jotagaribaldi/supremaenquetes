@@ -67,15 +67,17 @@ export class CandidateService {
         senator: [],
         federalDeputy: [],
         stateDeputy: [],
+        stateDeputyReelection: [],
       };
     }
 
-    const [president, governor, senator, federalDeputy, stateDeputy] = await Promise.all([
+    const [president, governor, senator, federalDeputy, stateDeputy, stateDeputyReelection] = await Promise.all([
       this.findByStateAndCargo(survey.state, 1),
       this.findByStateAndCargo(survey.state, 3),
       this.findByStateAndCargo(survey.state, 5),
       this.findByStateAndCargo(survey.state, 6),
       this.findByStateAndCargo(survey.state, 7),
+      this.findStateDeputyReelection(survey.state),
     ]);
 
     return {
@@ -84,6 +86,32 @@ export class CandidateService {
       senator,
       federalDeputy,
       stateDeputy,
+      stateDeputyReelection,
     };
+  }
+
+  async findStateDeputyReelection(state: string) {
+    const candidates = await this.prisma.candidates.findMany({
+      where: {
+        state: state.toUpperCase(),
+        cargoCode: 7,
+        reelection: true,
+      },
+      select: {
+        id: true,
+        candidateNumber: true,
+        name: true,
+        urnName: true,
+        partyNumber: true,
+        partyAcronym: true,
+        partyName: true,
+        coalitionName: true,
+        federationName: true,
+        situation: true,
+      },
+      orderBy: { candidateNumber: 'asc' },
+    });
+
+    return this.deduplicateByCandidateNumber(candidates);
   }
 }

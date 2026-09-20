@@ -27,6 +27,7 @@ const responseSchema = z.object({
   senatorVote: z.string().min(1, 'Selecione um candidato'),
   senatorVote2: z.string().min(1, 'Selecione um candidato'),
   stateDeputyVote: z.string().min(1, 'Selecione um candidato'),
+  stateDeputyReelectionRejection: z.string().min(1, 'Selecione um candidato'),
   federalDeputyVote: z.string().min(1, 'Selecione um candidato'),
   ipAddress: z.string(),
   latitude: z.number(),
@@ -77,12 +78,14 @@ export default function PublicSurveyPage() {
     senator: any[];
     federalDeputy: any[];
     stateDeputy: any[];
+    stateDeputyReelection: any[];
   }>({
     president: [],
     governor: [],
     senator: [],
     federalDeputy: [],
     stateDeputy: [],
+    stateDeputyReelection: [],
   });
   const [candidatesLoading, setCandidatesLoading] = useState(false);
 
@@ -107,6 +110,7 @@ export default function PublicSurveyPage() {
       senatorVote: '',
       senatorVote2: '',
       stateDeputyVote: '',
+      stateDeputyReelectionRejection: '',
       federalDeputyVote: '',
       ipAddress: '',
       latitude: 0,
@@ -429,6 +433,19 @@ export default function PublicSurveyPage() {
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar deputado estadual..."
                         options={candidates.stateDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                        {...field}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="stateDeputyReelectionRejection"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableSelect
+                        label="Dos atuais candidatos a deputado estadual e que estão disputando a reeleição, qual deles você não votaria?"
+                        placeholder="Selecione o candidato que NÃO votaria"
+                        searchPlaceholder="Buscar deputado estadual em reeleição para rejeição..."
+                        options={candidates.stateDeputyReelection?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
                         {...field}
                       />
                     )}

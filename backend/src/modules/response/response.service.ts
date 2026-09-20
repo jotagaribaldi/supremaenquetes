@@ -86,6 +86,7 @@ export class ResponseService {
         senatorVote: dto.senatorVote,
         senatorVote2: dto.senatorVote2,
         stateDeputyVote: dto.stateDeputyVote,
+        stateDeputyReelectionRejection: dto.stateDeputyReelectionRejection,
         federalDeputyVote: dto.federalDeputyVote,
         ipAddress: dto.ipAddress,
         latitude: dto.latitude,
