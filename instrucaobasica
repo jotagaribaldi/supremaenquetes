@@ -1,0 +1,187 @@
+🚀 PROMPT – Plataforma Web de Enquetes Eleitorais (Micro SaaS)
+
+Atue como um arquiteto de software sênior e engenheiro fullstack experiente. Sua missão é projetar e implementar uma aplicação web completa no modelo Micro SaaS para realização de enquetes eleitorais georreferenciadas, com foco em escalabilidade, segurança e monetização.
+
+🎯 OBJETIVO DA APLICAÇÃO
+
+Desenvolver uma plataforma web multiempresa (multi-tenant) onde clientes possam criar e acompanhar enquetes eleitorais com controle antifraude baseado em:
+
+IP do usuário
+Geolocalização (latitude/longitude)
+Distância mínima entre respostas (25 metros)
+🧱 STACK TECNOLÓGICA (OBRIGATÓRIA)
+Frontend
+React (preferencialmente com Next.js 14+)
+TypeScript
+TailwindCSS + ShadCN UI (UI moderna e responsiva)
+React Hook Form + Zod (validação)
+Zustand ou Redux Toolkit (estado global)
+Recharts ou Chart.js (gráficos)
+Backend
+Node.js com NestJS (arquitetura modular e escalável)
+TypeScript
+Prisma ORM
+Banco de Dados
+PostgreSQL (com suporte a geolocalização via PostGIS)
+Infraestrutura
+Docker + Docker Compose
+Deploy pronto para VPS (Nginx)
+Autenticação via JWT
+Multi-tenant (isolamento lógico por tenant_id)
+🧩 FUNCIONALIDADES PRINCIPAIS
+👤 1. Sistema de Usuários (SaaS)
+Cadastro e login
+Perfis:
+Admin (plataforma)
+Cliente (quem cria enquetes)
+Cada cliente pode gerenciar suas próprias enquetes
+🗳️ 2. Formulário de Enquete Eleitoral
+
+Campos obrigatórios:
+
+Cidade onde está votando (texto ou select)
+Sexo:
+Masculino
+Feminino
+Faixa etária:
+16–24
+25–34
+35–44
+45–59
+60+
+Escolaridade:
+Ensino Fundamental
+Ensino Médio
+Ensino Superior
+Voto para:
+Governador
+Presidente
+Senador
+Deputado Estadual
+Deputado Federal
+📡 3. Captura de Metadados (AUTOMÁTICO)
+
+O sistema deve capturar automaticamente:
+
+Data e hora do envio
+Endereço IP do usuário
+Coordenadas geográficas:
+Latitude
+Longitude (via API de geolocalização do navegador)
+🛡️ 4. REGRA DE VALIDAÇÃO (CRÍTICA – DIFERENCIAL)
+
+O sistema NÃO DEVE BLOQUEAR o envio, porém deve filtrar no momento da análise:
+
+❌ NÃO CONTABILIZAR respostas que:
+Venham do mesmo IP
+Estejam a menos de 25 metros de outra resposta já registrada
+✅ IMPLEMENTAÇÃO TÉCNICA:
+Usar PostGIS:
+ST_DistanceSphere() para cálculo de distância
+Criar flag no banco:
+is_valid = true/false
+Regras:
+Primeira resposta = válida
+Respostas subsequentes:
+Mesmo IP → inválida
+Distância < 25m → inválida
+📊 5. DASHBOARD E RELATÓRIOS
+
+Para cada enquete:
+
+Gráficos de intenção de voto:
+Presidente
+Governador
+etc.
+Distribuições:
+Sexo
+Faixa etária
+Escolaridade
+IMPORTANTE:
+Apenas respostas com is_valid = true devem ser consideradas
+Extras:
+Mapa com pontos geográficos (heatmap opcional)
+Filtros por cidade
+🧠 MODELAGEM DO BANCO (RESUMO)
+Tabelas principais:
+
+users
+
+id
+name
+email
+password
+role
+tenant_id
+
+tenants
+
+id
+name
+plan
+
+surveys
+
+id
+title
+tenant_id
+
+responses
+
+id
+survey_id
+city
+gender
+age_range
+education
+governor_vote
+president_vote
+senator_vote
+state_deputy_vote
+federal_deputy_vote
+ip_address
+latitude
+longitude
+created_at
+is_valid
+💰 MODELO DE NEGÓCIO (MICRO SAAS)
+
+Implementar:
+
+Planos:
+Free:
+Limite de respostas (ex: 100)
+Pro:
+Respostas ilimitadas
+Relatórios completos
+Enterprise:
+API + exportação de dados
+Funcionalidades SaaS:
+Controle de uso por tenant
+Billing (preparar integração com Stripe)
+Feature flags por plano
+🎨 UX/UI (DIFERENCIAL)
+Design moderno estilo SaaS (inspirado em Vercel, Stripe)
+Formulário simples, rápido e mobile-first
+Indicador de progresso
+Feedback visual ao enviar
+🔐 SEGURANÇA
+Rate limiting por IP
+Proteção contra bots (reCAPTCHA opcional)
+Sanitização de inputs
+Headers de segurança (Helmet)
+🚀 ENTREGA ESPERADA
+
+A IA deve gerar:
+
+Estrutura completa do projeto (frontend + backend)
+Código funcional
+Docker configurado
+Scripts de build e deploy
+Seeds de banco
+Exemplos de gráficos
+API documentada (Swagger)
+📌 DIFERENCIAL COMPETITIVO DO PRODUTO
+Controle antifraude por geolocalização (raro no mercado)
+Foco em campanhas políticas regionais
+Pronto para comercialização como SaaS
