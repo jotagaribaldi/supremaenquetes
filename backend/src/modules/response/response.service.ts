@@ -172,15 +172,25 @@ export class ResponseService {
 
     // Governor vote by gender breakdown
     const governorByGender: Record<string, { Masculino: number; Feminino: number }> = {};
+    const presidentByGender: Record<string, { Masculino: number; Feminino: number }> = {};
     responses.forEach(r => {
-      const vote = r.governorVote;
+      const govVote = r.governorVote;
+      const presVote = r.presidentVote;
       const gender = r.gender;
-      if (vote && vote.trim() && gender && gender.trim()) {
-        if (!governorByGender[vote]) {
-          governorByGender[vote] = { Masculino: 0, Feminino: 0 };
+      if (govVote && govVote.trim() && gender && gender.trim()) {
+        if (!governorByGender[govVote]) {
+          governorByGender[govVote] = { Masculino: 0, Feminino: 0 };
         }
         if (gender === 'Masculino' || gender === 'Feminino') {
-          governorByGender[vote][gender]++;
+          governorByGender[govVote][gender]++;
+        }
+      }
+      if (presVote && presVote.trim() && gender && gender.trim()) {
+        if (!presidentByGender[presVote]) {
+          presidentByGender[presVote] = { Masculino: 0, Feminino: 0 };
+        }
+        if (gender === 'Masculino' || gender === 'Feminino') {
+          presidentByGender[presVote][gender]++;
         }
       }
     });
@@ -193,6 +203,83 @@ export class ResponseService {
         total: counts.Masculino + counts.Feminino,
       }))
       .sort((a, b) => b.total - a.total);
+
+    // Calculate percentages per gender (each gender sums to 100%)
+    const totalMasculino = Object.values(governorByGender).reduce((sum, counts) => sum + counts.Masculino, 0);
+    const totalFeminino = Object.values(governorByGender).reduce((sum, counts) => sum + counts.Feminino, 0);
+
+    const governorByGenderPercentage = Object.entries(governorByGender)
+      .map(([candidate, counts]) => ({
+        candidate,
+        masculino: totalMasculino > 0 ? Math.round((counts.Masculino / totalMasculino) * 100) : 0,
+        feminino: totalFeminino > 0 ? Math.round((counts.Feminino / totalFeminino) * 100) : 0,
+      }))
+      .sort((a, b) => (b.masculino + b.feminino) - (a.masculino + a.feminino));
+
+    const presidentByGenderArray = Object.entries(presidentByGender)
+      .map(([candidate, counts]) => ({
+        candidate,
+        masculino: counts.Masculino,
+        feminino: counts.Feminino,
+        total: counts.Masculino + counts.Feminino,
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    // President vote by age range breakdown
+    const presidentByAgeRange: Record<string, Record<string, number>> = {};
+    responses.forEach(r => {
+      const vote = r.presidentVote;
+      const ageRange = r.ageRange;
+      if (vote && vote.trim() && ageRange && ageRange.trim()) {
+        if (!presidentByAgeRange[ageRange]) {
+          presidentByAgeRange[ageRange] = {};
+        }
+        presidentByAgeRange[ageRange][vote] = (presidentByAgeRange[ageRange][vote] || 0) + 1;
+      }
+    });
+
+    const presidentByAgeRangeArray = Object.entries(presidentByAgeRange)
+      .map(([ageRange, counts]) => {
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        const candidates = Object.entries(counts).map(([candidate, count]) => ({
+          candidate,
+          count,
+          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+        }));
+        return { ageRange, total, candidates };
+      })
+      .sort((a, b) => {
+        const order = ['16-24', '25-34', '35-44', '45-59', '60+'];
+        return order.indexOf(a.ageRange) - order.indexOf(b.ageRange);
+      });
+
+    // Governor vote by age range breakdown
+    const governorByAgeRange: Record<string, Record<string, number>> = {};
+    responses.forEach(r => {
+      const vote = r.governorVote;
+      const ageRange = r.ageRange;
+      if (vote && vote.trim() && ageRange && ageRange.trim()) {
+        if (!governorByAgeRange[ageRange]) {
+          governorByAgeRange[ageRange] = {};
+        }
+        governorByAgeRange[ageRange][vote] = (governorByAgeRange[ageRange][vote] || 0) + 1;
+      }
+    });
+
+    const governorByAgeRangeArray = Object.entries(governorByAgeRange)
+      .map(([ageRange, counts]) => {
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        const candidates = Object.entries(counts).map(([candidate, count]) => ({
+          candidate,
+          count,
+          percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+        }));
+        return { ageRange, total, candidates };
+      })
+      .sort((a, b) => {
+        const order = ['16-24', '25-34', '35-44', '45-59', '60+'];
+        return order.indexOf(a.ageRange) - order.indexOf(b.ageRange);
+      });
 
     return {
       totalResponses,
@@ -209,6 +296,10 @@ export class ResponseService {
       tocantinsVote: countField('tocantinsVote'),
       stateDeputyReelectionRejection: countField('stateDeputyReelectionRejection'),
       governorByGender: governorByGenderArray,
+      governorByGenderPercentage: governorByGenderPercentage,
+      presidentByGender: presidentByGenderArray,
+      presidentByAgeRange: presidentByAgeRangeArray,
+      governorByAgeRange: governorByAgeRangeArray,
     };
   }
 

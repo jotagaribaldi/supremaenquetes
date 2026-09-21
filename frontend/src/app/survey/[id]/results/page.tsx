@@ -8,6 +8,7 @@ import { Loader2, CheckCircle, Share2, Twitter, Facebook, MessageSquare, Mail } 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell,
+  LabelList,
 } from 'recharts';
 
 interface VoteCount {
@@ -21,11 +22,23 @@ interface DemographicData {
   count: number;
 }
 
-interface GovernorByGender {
+interface CandidateByGender {
   candidate: string;
   masculino: number;
   feminino: number;
   total: number;
+}
+
+interface CandidateByGenderPercentage {
+  candidate: string;
+  masculino: number;
+  feminino: number;
+}
+
+interface CandidateByAgeRange {
+  ageRange: string;
+  total: number;
+  candidates: { candidate: string; count: number; percentage: number }[];
 }
 
 interface SurveyResults {
@@ -42,7 +55,11 @@ interface SurveyResults {
   governorEvaluation: VoteCount[];
   tocantinsVote: VoteCount[];
   stateDeputyReelectionRejection: VoteCount[];
-  governorByGender: GovernorByGender[];
+  governorByGender: CandidateByGender[];
+  presidentByGender: CandidateByGender[];
+  presidentByAgeRange: CandidateByAgeRange[];
+  governorByAgeRange: CandidateByAgeRange[];
+  governorByGenderPercentage: CandidateByGenderPercentage[];
 }
 
 const COLORS = [
@@ -58,9 +75,11 @@ export default function SurveyResultsPage() {
   const [results, setResults] = useState<SurveyResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState('');
 
   useEffect(() => {
     fetchResults();
+    setShareUrl(window.location.origin + `/survey/${surveyId}`);
   }, [surveyId]);
 
   const fetchResults = async () => {
@@ -75,8 +94,6 @@ export default function SurveyResultsPage() {
       setLoading(false);
     }
   };
-
-  const shareUrl = window.location.origin + `/survey/${surveyId}`;
 
   const handleShare = async (platform: string) => {
     const text = encodeURIComponent('Participei da enquete e vi os resultados!');
@@ -167,15 +184,51 @@ export default function SurveyResultsPage() {
             </ChartCard>
           )}
 
+          {results.governor.length > 0 && (
+            <ChartCard title="Intenção de Voto - Governador">
+              <BarChartWrapper data={results.governor} />
+            </ChartCard>
+          )}
+
           {results.governorByGender && results.governorByGender.length > 0 && (
             <ChartCard title="Voto para Governador por Sexo">
               <GroupedBarChartWrapper data={results.governorByGender} />
             </ChartCard>
           )}
 
+          {results.governorByGenderPercentage && results.governorByGenderPercentage.length > 0 && (
+            <ChartCard title="Preferência para Governador por Sexo (% por sexo)">
+              <GenderStackedBarChartWrapper data={results.governorByGenderPercentage} />
+            </ChartCard>
+          )}
+
+          {results.governorByAgeRange && results.governorByAgeRange.length > 0 && (
+            <ChartCard title="Voto para Governador por Faixa Etária (% por faixa)">
+              <StackedBarChartWrapper data={results.governorByAgeRange} />
+            </ChartCard>
+          )}
+
           {results.president.length > 0 && (
             <ChartCard title="Intenção de Voto - Presidente">
               <BarChartWrapper data={results.president} />
+            </ChartCard>
+          )}
+
+          {results.presidentByGender && results.presidentByGender.length > 0 && (
+            <ChartCard title="Voto para Presidente por Sexo">
+              <GroupedBarChartWrapper data={results.presidentByGender} />
+            </ChartCard>
+          )}
+
+          {results.presidentByAgeRange && results.presidentByAgeRange.length > 0 && (
+            <ChartCard title="Voto para Presidente por Faixa Etária (% por faixa)">
+              <StackedBarChartWrapper data={results.presidentByAgeRange} />
+            </ChartCard>
+          )}
+
+          {results.governorByAgeRange && results.governorByAgeRange.length > 0 && (
+            <ChartCard title="Voto para Governador por Faixa Etária (% por faixa)">
+              <StackedBarChartWrapper data={results.governorByAgeRange} />
             </ChartCard>
           )}
 
@@ -197,45 +250,15 @@ export default function SurveyResultsPage() {
             </ChartCard>
           )}
 
-          {results.gender.length > 0 && (
-            <ChartCard title="Distribuição por Sexo">
-              <PieChartWrapper data={results.gender.map(d => ({ label: d.label, value: d.count }))} />
+          {results.presidentByGender && results.presidentByGender.length > 0 && (
+            <ChartCard title="Voto para Presidente por Sexo">
+              <GroupedBarChartWrapper data={results.presidentByGender} />
             </ChartCard>
           )}
 
-          {results.ageRange.length > 0 && (
-            <ChartCard title="Distribuição por Faixa Etária">
-              <BarChartWrapper data={results.ageRange.map(d => ({ label: d.label, value: d.count }))} horizontal />
-            </ChartCard>
-          )}
-
-          {results.education.length > 0 && (
-            <ChartCard title="Distribuição por Escolaridade">
-              <PieChartWrapper data={results.education.map(d => ({ label: d.label, value: d.count }))} />
-            </ChartCard>
-          )}
-
-          {results.presidentEvaluation.length > 0 && (
-            <ChartCard title="Avaliação do Presidente">
-              <BarChartWrapper data={results.presidentEvaluation} horizontal />
-            </ChartCard>
-          )}
-
-          {results.governorEvaluation.length > 0 && (
-            <ChartCard title="Avaliação do Governador">
-              <BarChartWrapper data={results.governorEvaluation} horizontal />
-            </ChartCard>
-          )}
-
-          {results.tocantinsVote.length > 0 && (
-            <ChartCard title="Vota no Tocantins?">
-              <PieChartWrapper data={results.tocantinsVote} />
-            </ChartCard>
-          )}
-
-          {results.stateDeputyReelectionRejection.length > 0 && (
-            <ChartCard title="Rejeição - Deputado Estadual em Reeleição">
-              <BarChartWrapper data={results.stateDeputyReelectionRejection} />
+          {results.governorByGender && results.governorByGender.length > 0 && (
+            <ChartCard title="Voto para Governador por Sexo">
+              <GroupedBarChartWrapper data={results.governorByGender} />
             </ChartCard>
           )}
         </div>
@@ -278,23 +301,31 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function BarChartWrapper({ data, horizontal = false }: { data: VoteCount[]; horizontal?: boolean }) {
   if (data.length === 0) return <div className="text-center text-gray-500 h-full flex items-center justify-center">Sem dados</div>;
 
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const dataWithPct = data.map(d => ({
+    ...d,
+    percentage: total > 0 ? (d.value / total) * 100 : 0,
+  }));
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       {horizontal ? (
-        <BarChart layout="vertical" data={data}>
+        <BarChart layout="vertical" data={dataWithPct}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number" />
+          <XAxis type="number" tickFormatter={v => `${v}%`} />
           <YAxis type="category" dataKey="label" width={120} tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(value: number) => [value, 'votos']} />
-          <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+          <Tooltip formatter={(value: number) => [`${value.toFixed(1)}%`, 'porcentagem']} />
+          <Bar dataKey="percentage" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+          <LabelList dataKey="percentage" position="insideRight" formatter={(v: number) => `${v.toFixed(1)}%`} fontSize={11} fill="#fff" />
         </BarChart>
       ) : (
-        <BarChart data={data}>
+        <BarChart data={dataWithPct}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis type="number" />
-          <Tooltip formatter={(value: number) => [value, 'votos']} />
-          <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+          <YAxis type="number" tickFormatter={v => `${v}%`} domain={[0, 100]} />
+          <Tooltip formatter={(value: number) => [`${value.toFixed(1)}%`, 'porcentagem']} />
+          <Bar dataKey="percentage" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+          <LabelList dataKey="percentage" position="top" formatter={(v: number) => `${v.toFixed(1)}%`} fontSize={11} />
         </BarChart>
       )}
     </ResponsiveContainer>
@@ -330,19 +361,74 @@ function PieChartWrapper({ data }: { data: VoteCount[] }) {
   );
 }
 
-function GroupedBarChartWrapper({ data }: { data: GovernorByGender[] }) {
+function GroupedBarChartWrapper({ data }: { data: CandidateByGender[] }) {
   if (data.length === 0) return <div className="text-center text-gray-500 h-full flex items-center justify-center">Sem dados</div>;
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} layout="vertical">
+      <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis type="number" />
-        <YAxis type="category" dataKey="candidate" width={140} tick={{ fontSize: 11 }} />
+        <XAxis dataKey="candidate" tick={{ fontSize: 11 }} />
+        <YAxis type="number" />
         <Tooltip formatter={(value: number, name: string) => [value, name === 'masculino' ? 'Homens' : 'Mulheres']} />
         <Legend />
-        <Bar dataKey="masculino" fill="#3b82f6" name="Homens" radius={[0, 4, 4, 0]} />
-        <Bar dataKey="feminino" fill="#ec4899" name="Mulheres" radius={[0, 4, 4, 0]} />
+        <Bar dataKey="masculino" fill="#3b82f6" name="Homens" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="feminino" fill="#ec4899" name="Mulheres" radius={[4, 4, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function StackedBarChartWrapper({ data }: { data: { ageRange: string; total: number; candidates: { candidate: string; count: number; percentage: number }[] }[] }) {
+  if (data.length === 0) return <div className="text-center text-gray-500 h-full flex items-center justify-center">Sem dados</div>;
+
+  const allCandidates = Array.from(new Set(data.flatMap(d => d.candidates.map(c => c.candidate))));
+  
+  const chartData = data.map(d => {
+    const obj: any = { ageRange: d.ageRange };
+    allCandidates.forEach(candidate => {
+      const found = d.candidates.find(c => c.candidate === candidate);
+      obj[candidate] = found ? found.percentage : 0;
+    });
+    return obj;
+  });
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="ageRange" type="category" tick={{ fontSize: 11 }} />
+        <YAxis type="number" tickFormatter={v => `${v}%`} />
+        <Tooltip formatter={(value: number, name: string) => [value, `${name} ${value}%`]} />
+        <Legend />
+        {allCandidates.map((candidate, index) => (
+          <Bar key={candidate} dataKey={candidate} name={candidate} fill={COLORS[index % COLORS.length]} radius={[4, 4, 0, 0]} />
+        ))}
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+function GenderStackedBarChartWrapper({ data }: { data: CandidateByGenderPercentage[] }) {
+  if (data.length === 0) return <div className="text-center text-gray-500 h-full flex items-center justify-center">Sem dados</div>;
+
+  const chartData = [
+    { gender: 'Masculino', ...Object.fromEntries(data.map(d => [d.candidate, d.masculino])) },
+    { gender: 'Feminino', ...Object.fromEntries(data.map(d => [d.candidate, d.feminino])) },
+  ];
+  const allCandidates = data.map(d => d.candidate);
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="gender" type="category" tick={{ fontSize: 14 }} />
+        <YAxis type="number" tickFormatter={v => `${v}%`} domain={[0, 100]} />
+        <Tooltip formatter={(value: number, name: string) => [value, `${name} ${value}%`]} />
+        <Legend orientation="horizontal" verticalAlign="bottom" dy={20} />
+        {data.map((d, index) => (
+          <Bar key={d.candidate} dataKey={d.candidate} name={d.candidate} fill={COLORS[index % COLORS.length]} radius={[4, 4, 0, 0]} />
+        ))}
       </BarChart>
     </ResponsiveContainer>
   );
