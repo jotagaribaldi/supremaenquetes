@@ -22,8 +22,10 @@ const responseSchema = z.object({
   education: z.enum(['Ensino Fundamental', 'Ensino Médio', 'Ensino Superior']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
   governorVote: z.string().min(1, 'Selecione um candidato'),
   governorRejection: z.string().min(1, 'Selecione um candidato'),
+  governorEvaluation: z.enum(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE']),
   presidentVote: z.string().min(1, 'Selecione um candidato'),
   presidentRejection: z.string().min(1, 'Selecione um candidato'),
+  presidentEvaluation: z.enum(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE']),
   senatorVote: z.string().min(1, 'Selecione um candidato'),
   senatorVote2: z.string().min(1, 'Selecione um candidato'),
   stateDeputyVote: z.string().min(1, 'Selecione um candidato'),
@@ -105,8 +107,10 @@ export default function PublicSurveyPage() {
       education: '',
       governorVote: '',
       governorRejection: '',
+      governorEvaluation: '',
       presidentVote: '',
       presidentRejection: '',
+      presidentEvaluation: '',
       senatorVote: '',
       senatorVote2: '',
       stateDeputyVote: '',
@@ -189,16 +193,15 @@ export default function PublicSurveyPage() {
 
     try {
       const res = await responseApi.create(data);
-      setSubmitResult({
-        success: true,
-        message: res.data.isValid
-          ? 'Resposta registrada com sucesso! Obrigado por participar.'
-          : 'Resposta registrada, mas marcada como inválida pelo sistema antifraude (mesmo IP ou proximidade < 25m).',
-        isValid: res.data.isValid,
-      });
-      setTimeout(() => {
-        router.push('/survey/' + surveyId + '?submitted=true');
-      }, 3000);
+      if (res.data.isValid) {
+        router.push('/survey/' + surveyId + '/results');
+      } else {
+        setSubmitResult({
+          success: true,
+          message: 'Resposta registrada, mas marcada como inválida pelo sistema antifraude (mesmo IP ou proximidade < 25m).',
+          isValid: false,
+        });
+      }
     } catch (err: any) {
       setSubmitResult({
         success: false,
@@ -241,7 +244,25 @@ export default function PublicSurveyPage() {
   const watchedAgeRange = watch('ageRange');
   const watchedEducation = watch('education');
   const watchedTocantins = watch('tocantinsVote');
-  const progress = [watchedTocantins, watchedGender, watchedAgeRange, watchedEducation].filter(Boolean).length / 4 * 100;
+  const watchedGovernorVote = watch('governorVote');
+  const watchedGovernorRejection = watch('governorRejection');
+  const watchedGovernorEvaluation = watch('governorEvaluation');
+  const watchedPresidentVote = watch('presidentVote');
+  const watchedPresidentRejection = watch('presidentRejection');
+  const watchedPresidentEvaluation = watch('presidentEvaluation');
+  const watchedSenatorVote = watch('senatorVote');
+  const watchedSenatorVote2 = watch('senatorVote2');
+  const watchedStateDeputyVote = watch('stateDeputyVote');
+  const watchedStateDeputyReelectionRejection = watch('stateDeputyReelectionRejection');
+  const watchedFederalDeputyVote = watch('federalDeputyVote');
+  const progress = [
+    watchedTocantins, watchedGender, watchedAgeRange, watchedEducation,
+    watchedGovernorVote, watchedGovernorRejection, watchedGovernorEvaluation,
+    watchedPresidentVote, watchedPresidentRejection, watchedPresidentEvaluation,
+    watchedSenatorVote, watchedSenatorVote2,
+    watchedStateDeputyVote, watchedStateDeputyReelectionRejection,
+    watchedFederalDeputyVote
+  ].filter(Boolean).length / 15 * 100;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -380,6 +401,42 @@ export default function PublicSurveyPage() {
                         />
                       );
                     }}
+                  />
+                  <Controller
+                    name="presidentEvaluation"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        label="Qual a sua avaliação em relação a gestão do atual presidente da república?"
+                        placeholder="Selecione"
+                        options={[
+                          { value: 'PÉSSIMA', label: 'PÉSSIMA' },
+                          { value: 'RUIM', label: 'RUIM' },
+                          { value: 'REGULAR', label: 'REGULAR' },
+                          { value: 'BOA', label: 'BOA' },
+                          { value: 'EXCELENTE', label: 'EXCELENTE' },
+                        ]}
+                        {...field}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="governorEvaluation"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        label="Qual a sua avaliação em relação ao atual governador do estado?"
+                        placeholder="Selecione"
+                        options={[
+                          { value: 'PÉSSIMA', label: 'PÉSSIMA' },
+                          { value: 'RUIM', label: 'RUIM' },
+                          { value: 'REGULAR', label: 'REGULAR' },
+                          { value: 'BOA', label: 'BOA' },
+                          { value: 'EXCELENTE', label: 'EXCELENTE' },
+                        ]}
+                        {...field}
+                      />
+                    )}
                   />
                   <Controller
                     name="senatorVote"

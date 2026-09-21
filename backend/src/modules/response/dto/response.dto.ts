@@ -80,6 +80,16 @@ export class CreateResponseDto {
   @IsString()
   federalDeputyVote?: string;
 
+  @ApiProperty({ example: 'BOA', enum: ['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE'], required: false })
+  @IsOptional()
+  @IsIn(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE'])
+  presidentEvaluation?: string;
+
+  @ApiProperty({ example: 'REGULAR', enum: ['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE'], required: false })
+  @IsOptional()
+  @IsIn(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE'])
+  governorEvaluation?: string;
+
   @ApiProperty({ example: '192.168.1.1' })
   @IsIP()
   ipAddress: string;

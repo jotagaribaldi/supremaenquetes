@@ -81,8 +81,10 @@ export class ResponseService {
         education: dto.education,
         governorVote: dto.governorVote,
         governorRejection: dto.governorRejection,
+        governorEvaluation: dto.governorEvaluation,
         presidentVote: dto.presidentVote,
         presidentRejection: dto.presidentRejection,
+        presidentEvaluation: dto.presidentEvaluation,
         senatorVote: dto.senatorVote,
         senatorVote2: dto.senatorVote2,
         stateDeputyVote: dto.stateDeputyVote,
@@ -143,6 +145,71 @@ export class ResponseService {
     return this.prisma.responses.count({
       where: { surveyId: surveyId, isValid: false },
     });
+  }
+
+  async getResults(surveyId: string) {
+    const responses = await this.prisma.responses.findMany({
+      where: {
+        surveyId,
+        isValid: true,
+      },
+    });
+
+    const totalResponses = responses.length;
+
+    const countField = (field: string) => {
+      const counts: Record<string, number> = {};
+      responses.forEach(r => {
+        const value = (r as any)[field];
+        if (value && value.trim()) {
+          counts[value] = (counts[value] || 0) + 1;
+        }
+      });
+      return Object.entries(counts)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value);
+    };
+
+    // Governor vote by gender breakdown
+    const governorByGender: Record<string, { Masculino: number; Feminino: number }> = {};
+    responses.forEach(r => {
+      const vote = r.governorVote;
+      const gender = r.gender;
+      if (vote && vote.trim() && gender && gender.trim()) {
+        if (!governorByGender[vote]) {
+          governorByGender[vote] = { Masculino: 0, Feminino: 0 };
+        }
+        if (gender === 'Masculino' || gender === 'Feminino') {
+          governorByGender[vote][gender]++;
+        }
+      }
+    });
+
+    const governorByGenderArray = Object.entries(governorByGender)
+      .map(([candidate, counts]) => ({
+        candidate,
+        masculino: counts.Masculino,
+        feminino: counts.Feminino,
+        total: counts.Masculino + counts.Feminino,
+      }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      totalResponses,
+      governor: countField('governorVote'),
+      president: countField('presidentVote'),
+      senator: countField('senatorVote'),
+      federalDeputy: countField('federalDeputyVote'),
+      stateDeputy: countField('stateDeputyVote'),
+      gender: countField('gender'),
+      ageRange: countField('ageRange'),
+      education: countField('education'),
+      presidentEvaluation: countField('presidentEvaluation'),
+      governorEvaluation: countField('governorEvaluation'),
+      tocantinsVote: countField('tocantinsVote'),
+      stateDeputyReelectionRejection: countField('stateDeputyReelectionRejection'),
+      governorByGender: governorByGenderArray,
+    };
   }
 
   private async checkTenantLimit(tenantId: string) {

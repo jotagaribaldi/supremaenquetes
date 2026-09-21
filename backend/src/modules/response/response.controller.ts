@@ -67,4 +67,10 @@ export class ResponseController {
     ]);
     return { valid, invalid, total: valid + invalid };
   }
+
+  @Get('survey/:surveyId/results')
+  @ApiOperation({ summary: 'Obter resultados agregados da enquete (público)' })
+  async getResults(@Param('surveyId') surveyId: string) {
+    return this.responseService.getResults(surveyId);
+  }
 }
