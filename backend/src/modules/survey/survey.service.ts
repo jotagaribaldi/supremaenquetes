@@ -27,6 +27,7 @@ export class SurveyService {
         title: dto.title,
         tenantId,
         state: dto.state?.toUpperCase(),
+        type: dto.type ?? 1,
       },
     });
   }

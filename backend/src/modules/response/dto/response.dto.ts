@@ -90,6 +90,16 @@ export class CreateResponseDto {
   @IsIn(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE'])
   governorEvaluation?: string;
 
+  @ApiProperty({ example: 'Candidato X', required: false, description: 'Candidato a presidente que o eleitor acredita que vencerá (confiança)' })
+  @IsOptional()
+  @IsString()
+  presidentWinnerPrediction?: string;
+
+  @ApiProperty({ example: 'Candidato Y', required: false, description: 'Candidato a governador que o eleitor acredita que vencerá (confiança)' })
+  @IsOptional()
+  @IsString()
+  governorWinnerPrediction?: string;
+
   @ApiProperty({ example: '192.168.1.1' })
   @IsIP()
   ipAddress: string;

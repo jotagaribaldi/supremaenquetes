@@ -58,11 +58,11 @@ export const tenantApi = {
 export const surveyApi = {
   list: (tenantId?: string) =>
     api.get('/surveys', { params: { tenantId } }),
-  create: (data: { title: string; state?: string; tenantId?: string }) =>
+  create: (data: { title: string; state?: string; type?: number; tenantId?: string }) =>
     api.post('/surveys', data),
   getPublic: (id: string) => api.get(`/surveys/public/${id}`),
   getById: (id: string) => api.get(`/surveys/${id}`),
-  update: (id: string, data: { title?: string; state?: string }) => api.patch(`/surveys/${id}`, data),
+  update: (id: string, data: { title?: string; state?: string; type?: number }) => api.patch(`/surveys/${id}`, data),
   delete: (id: string) => api.delete(`/surveys/${id}`),
 };
 

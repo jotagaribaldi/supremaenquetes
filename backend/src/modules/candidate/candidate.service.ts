@@ -16,11 +16,12 @@ export class CandidateService {
     });
   }
 
-  async findByStateAndCargo(state: string, cargoCode: number) {
+  async findByStateAndCargo(state: string, cargoCode: number, secondRoundOnly = false) {
     const candidates = await this.prisma.candidates.findMany({
       where: {
         state: state.toUpperCase(),
         cargoCode,
+        ...(secondRoundOnly ? { secondRound: true } : {}),
       },
       select: {
         id: true,
@@ -53,7 +54,7 @@ export class CandidateService {
   async findBySurvey(surveyId: string) {
     const survey = await this.prisma.surveys.findUnique({
       where: { id: surveyId },
-      select: { state: true },
+      select: { state: true, type: true },
     });
 
     if (!survey) {
@@ -68,16 +69,22 @@ export class CandidateService {
         federalDeputy: [],
         stateDeputy: [],
         stateDeputyReelection: [],
+        presidentSecondRound: [],
+        governorSecondRound: [],
       };
     }
 
-    const [president, governor, senator, federalDeputy, stateDeputy, stateDeputyReelection] = await Promise.all([
+    const isSecondRound = survey.type === 2;
+
+    const [president, governor, senator, federalDeputy, stateDeputy, stateDeputyReelection, presidentSecondRound, governorSecondRound] = await Promise.all([
       this.findByStateAndCargo(survey.state, 1),
       this.findByStateAndCargo(survey.state, 3),
       this.findByStateAndCargo(survey.state, 5),
       this.findByStateAndCargo(survey.state, 6),
       this.findByStateAndCargo(survey.state, 7),
       this.findStateDeputyReelection(survey.state),
+      isSecondRound ? this.findByStateAndCargo(survey.state, 1, true) : Promise.resolve([]),
+      isSecondRound ? this.findByStateAndCargo(survey.state, 3, true) : Promise.resolve([]),
     ]);
 
     return {
@@ -87,6 +94,8 @@ export class CandidateService {
       federalDeputy,
       stateDeputy,
       stateDeputyReelection,
+      presidentSecondRound,
+      governorSecondRound,
     };
   }
 

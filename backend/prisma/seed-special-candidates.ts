@@ -61,6 +61,7 @@ async function main() {
               cargoCode: cargoCode,
               cargoName: cargoName,
               ...special,
+              secondRound: false,
             },
           });
           console.log(`Added: ${state} - ${cargoName} - ${special.urnName}`);

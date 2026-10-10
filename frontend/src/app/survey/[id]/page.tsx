@@ -15,30 +15,6 @@ import { Survey } from '@/types';
 import { Loader2, CheckCircle, MapPin, AlertCircle, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const responseSchema = z.object({
-  tocantinsVote: z.enum(['Sim', 'Não']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
-  gender: z.enum(['Masculino', 'Feminino']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
-  ageRange: z.enum(['16-24', '25-34', '35-44', '45-59', '60+']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
-  education: z.enum(['Ensino Fundamental', 'Ensino Médio', 'Ensino Superior']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
-  governorVote: z.string().min(1, 'Selecione um candidato'),
-  governorRejection: z.string().min(1, 'Selecione um candidato'),
-  governorEvaluation: z.enum(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE']),
-  presidentVote: z.string().min(1, 'Selecione um candidato'),
-  presidentRejection: z.string().min(1, 'Selecione um candidato'),
-  presidentEvaluation: z.enum(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE']),
-  senatorVote: z.string().min(1, 'Selecione um candidato'),
-  senatorVote2: z.string().min(1, 'Selecione um candidato'),
-  stateDeputyVote: z.string().min(1, 'Selecione um candidato'),
-  stateDeputyReelectionRejection: z.string().min(1, 'Selecione um candidato'),
-  federalDeputyVote: z.string().min(1, 'Selecione um candidato'),
-  ipAddress: z.string(),
-  latitude: z.number(),
-  longitude: z.number(),
-  surveyId: z.string(),
-});
-
-type ResponseForm = z.infer<typeof responseSchema>;
-
 const genderOptions = [
   { value: 'Masculino', label: 'Masculino' },
   { value: 'Feminino', label: 'Feminino' },
@@ -63,6 +39,63 @@ const tocantinsOptions = [
   { value: 'Não', label: 'Não' },
 ];
 
+const evaluationOptions = [
+  { value: 'PÉSSIMA', label: 'PÉSSIMA' },
+  { value: 'RUIM', label: 'RUIM' },
+  { value: 'REGULAR', label: 'REGULAR' },
+  { value: 'BOA', label: 'BOA' },
+  { value: 'EXCELENTE', label: 'EXCELENTE' },
+];
+
+const createResponseSchema = (type: number) => {
+  const baseSchema = {
+    tocantinsVote: z.enum(['Sim', 'Não']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+    gender: z.enum(['Masculino', 'Feminino']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+    ageRange: z.enum(['16-24', '25-34', '35-44', '45-59', '60+']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+    education: z.enum(['Ensino Fundamental', 'Ensino Médio', 'Ensino Superior']).or(z.literal('')).refine(v => v !== '', 'Selecione uma opção'),
+    governorVote: z.string().min(1, 'Selecione um candidato'),
+    presidentVote: z.string().min(1, 'Selecione um candidato'),
+    governorEvaluation: z.enum(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE']),
+    presidentEvaluation: z.enum(['PÉSSIMA', 'RUIM', 'REGULAR', 'BOA', 'EXCELENTE']),
+    ipAddress: z.string(),
+    latitude: z.number(),
+    longitude: z.number(),
+    surveyId: z.string(),
+  };
+
+  if (type === 1) {
+    // 1º turno - includes rejection fields and more positions
+    return z.object({
+      ...baseSchema,
+      governorRejection: z.string().min(1, 'Selecione um candidato'),
+      presidentRejection: z.string().min(1, 'Selecione um candidato'),
+      senatorVote: z.string().min(1, 'Selecione um candidato'),
+      senatorVote2: z.string().min(1, 'Selecione um candidato'),
+      stateDeputyVote: z.string().min(1, 'Selecione um candidato'),
+      stateDeputyReelectionRejection: z.string().min(1, 'Selecione um candidato'),
+      federalDeputyVote: z.string().min(1, 'Selecione um candidato'),
+      presidentWinnerPrediction: z.string().optional(),
+      governorWinnerPrediction: z.string().optional(),
+    });
+  } else {
+    // 2º turno - only confidence questions, no rejection fields
+    return z.object({
+      ...baseSchema,
+      governorRejection: z.string().optional(),
+      presidentRejection: z.string().optional(),
+      senatorVote: z.string().optional(),
+      senatorVote2: z.string().optional(),
+      stateDeputyVote: z.string().optional(),
+      stateDeputyReelectionRejection: z.string().optional(),
+      federalDeputyVote: z.string().optional(),
+      presidentWinnerPrediction: z.string().min(1, 'Selecione um candidato'),
+      governorWinnerPrediction: z.string().min(1, 'Selecione um candidato'),
+    });
+  }
+};
+
+type ResponseForm = z.infer<ReturnType<typeof createResponseSchema>>;
+
 export default function PublicSurveyPage() {
   const params = useParams();
   const surveyId = params.id as string;
@@ -81,6 +114,8 @@ export default function PublicSurveyPage() {
     federalDeputy: any[];
     stateDeputy: any[];
     stateDeputyReelection: any[];
+    presidentSecondRound: any[];
+    governorSecondRound: any[];
   }>({
     president: [],
     governor: [],
@@ -88,8 +123,13 @@ export default function PublicSurveyPage() {
     federalDeputy: [],
     stateDeputy: [],
     stateDeputyReelection: [],
+    presidentSecondRound: [],
+    governorSecondRound: [],
   });
   const [candidatesLoading, setCandidatesLoading] = useState(false);
+
+  const isType2 = survey?.type === 2;
+  const responseSchema = createResponseSchema(isType2 ? 2 : 1);
 
   const {
     register,
@@ -116,6 +156,8 @@ export default function PublicSurveyPage() {
       stateDeputyVote: '',
       stateDeputyReelectionRejection: '',
       federalDeputyVote: '',
+      presidentWinnerPrediction: '',
+      governorWinnerPrediction: '',
       ipAddress: '',
       latitude: 0,
       longitude: 0,
@@ -255,14 +297,24 @@ export default function PublicSurveyPage() {
   const watchedStateDeputyVote = watch('stateDeputyVote');
   const watchedStateDeputyReelectionRejection = watch('stateDeputyReelectionRejection');
   const watchedFederalDeputyVote = watch('federalDeputyVote');
-  const progress = [
-    watchedTocantins, watchedGender, watchedAgeRange, watchedEducation,
-    watchedGovernorVote, watchedGovernorRejection, watchedGovernorEvaluation,
-    watchedPresidentVote, watchedPresidentRejection, watchedPresidentEvaluation,
-    watchedSenatorVote, watchedSenatorVote2,
-    watchedStateDeputyVote, watchedStateDeputyReelectionRejection,
-    watchedFederalDeputyVote
-  ].filter(Boolean).length / 15 * 100;
+  const watchedPresidentWinnerPrediction = watch('presidentWinnerPrediction');
+  const watchedGovernorWinnerPrediction = watch('governorWinnerPrediction');
+  const progressFields = isType2
+    ? [
+        watchedTocantins, watchedGender, watchedAgeRange, watchedEducation,
+        watchedGovernorVote, watchedGovernorEvaluation,
+        watchedPresidentVote, watchedPresidentEvaluation,
+        watchedPresidentWinnerPrediction, watchedGovernorWinnerPrediction
+      ]
+    : [
+        watchedTocantins, watchedGender, watchedAgeRange, watchedEducation,
+        watchedGovernorVote, watchedGovernorRejection, watchedGovernorEvaluation,
+        watchedPresidentVote, watchedPresidentRejection, watchedPresidentEvaluation,
+        watchedSenatorVote, watchedSenatorVote2,
+        watchedStateDeputyVote, watchedStateDeputyReelectionRejection,
+        watchedFederalDeputyVote
+      ];
+  const progress = progressFields.filter(Boolean).length / progressFields.length * 100;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
@@ -355,6 +407,7 @@ export default function PublicSurveyPage() {
                       />
                     )}
                   />
+                  {!isType2 && (
                   <Controller
                     name="governorRejection"
                     control={control}
@@ -372,19 +425,22 @@ export default function PublicSurveyPage() {
                       );
                     }}
                   />
-                  <Controller
-                    name="presidentVote"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        label="Presidente (voto)"
-                        placeholder="Selecione o candidato"
-                        searchPlaceholder="Buscar presidente..."
-                        options={candidates.president?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
-                        {...field}
-                      />
-                    )}
-                  />
+                )}
+
+                <Controller
+                  name="presidentVote"
+                  control={control}
+                  render={({ field }) => (
+                    <SearchableSelect
+                      label="Presidente (voto)"
+                      placeholder="Selecione o candidato"
+                      searchPlaceholder="Buscar presidente..."
+                      options={candidates.president?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
+                      {...field}
+                    />
+                  )}
+                />
+                {!isType2 && (
                   <Controller
                     name="presidentRejection"
                     control={control}
@@ -402,111 +458,138 @@ export default function PublicSurveyPage() {
                       );
                     }}
                   />
-                  <Controller
-                    name="presidentEvaluation"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        label="Qual a sua avaliação em relação a gestão do atual presidente da república?"
-                        placeholder="Selecione"
-                        options={[
-                          { value: 'PÉSSIMA', label: 'PÉSSIMA' },
-                          { value: 'RUIM', label: 'RUIM' },
-                          { value: 'REGULAR', label: 'REGULAR' },
-                          { value: 'BOA', label: 'BOA' },
-                          { value: 'EXCELENTE', label: 'EXCELENTE' },
-                        ]}
-                        {...field}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name="governorEvaluation"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        label="Qual a sua avaliação em relação ao atual governador do estado?"
-                        placeholder="Selecione"
-                        options={[
-                          { value: 'PÉSSIMA', label: 'PÉSSIMA' },
-                          { value: 'RUIM', label: 'RUIM' },
-                          { value: 'REGULAR', label: 'REGULAR' },
-                          { value: 'BOA', label: 'BOA' },
-                          { value: 'EXCELENTE', label: 'EXCELENTE' },
-                        ]}
-                        {...field}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name="senatorVote"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        label="Senador (1º voto)"
-                        placeholder="Selecione o 1º senador"
-                        searchPlaceholder="Buscar senador..."
-                        options={candidates.senator.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        {...field}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name="senatorVote2"
-                    control={control}
-                    render={({ field }) => {
-                      const firstSenator = watch('senatorVote');
-                      const filteredSenators = candidates.senator.filter(c => c.urnName !== firstSenator);
-                      return (
+                )}
+                <Controller
+                  name="presidentEvaluation"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      label="Qual a sua avaliação em relação a gestão do atual presidente da república?"
+                      placeholder="Selecione"
+                      options={evaluationOptions}
+                      {...field}
+                    />
+                  )}
+                />
+                <Controller
+                  name="governorEvaluation"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      label="Qual a sua avaliação em relação ao atual governador do estado?"
+                      placeholder="Selecione"
+                      options={evaluationOptions}
+                      {...field}
+                    />
+                  )}
+                />
+                {!isType2 && (
+                  <>
+                    <Controller
+                      name="senatorVote"
+                      control={control}
+                      render={({ field }) => (
                         <SearchableSelect
-                          label="Senador (2º voto)"
-                          placeholder="Selecione o 2º senador"
+                          label="Senador (1º voto)"
+                          placeholder="Selecione o 1º senador"
                           searchPlaceholder="Buscar senador..."
-                          options={filteredSenators.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                          options={candidates.senator.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                           {...field}
                         />
-                      );
-                    }}
-                  />
-                  <Controller
-                    name="federalDeputyVote"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        label="Deputado Federal"
-                        placeholder="Selecione o candidato"
-                        searchPlaceholder="Buscar deputado federal..."
-                        options={candidates.federalDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        {...field}
+                      )}
+                    />
+                    <Controller
+                      name="senatorVote2"
+                      control={control}
+                      render={({ field }) => {
+                        const firstSenator = watch('senatorVote');
+                        const filteredSenators = candidates.senator.filter(c => c.urnName !== firstSenator);
+                        return (
+                          <SearchableSelect
+                            label="Senador (2º voto)"
+                            placeholder="Selecione o 2º senador"
+                            searchPlaceholder="Buscar senador..."
+                            options={filteredSenators.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                            {...field}
+                          />
+                        );
+                      }}
+                    />
+                    <Controller
+                      name="federalDeputyVote"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          label="Deputado Federal"
+                          placeholder="Selecione o candidato"
+                          searchPlaceholder="Buscar deputado federal..."
+                          options={candidates.federalDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                          {...field}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name="stateDeputyVote"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          label="Deputado Estadual"
+                          placeholder="Selecione o candidato"
+                          searchPlaceholder="Buscar deputado estadual..."
+                          options={candidates.stateDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                          {...field}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name="stateDeputyReelectionRejection"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableSelect
+                          label="Dos atuais candidatos a deputado estadual e que estão disputando a reeleição, qual deles você não votaria?"
+                          placeholder="Selecione o candidato que NÃO votaria"
+                          searchPlaceholder="Buscar deputado estadual em reeleição para rejeição..."
+                          options={candidates.stateDeputyReelection?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
+                          {...field}
+                        />
+                      )}
+                    />
+                  </>
+                )}
+
+                {isType2 && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Confiança do Eleitor (2º Turno)</h3>
+                    <div className="space-y-4">
+                      <Controller
+                        name="presidentWinnerPrediction"
+                        control={control}
+                        render={({ field }) => (
+                          <SearchableSelect
+                            label="Independente do seu voto para presidente, qual destes candidatos você acredita que irá vencer as eleições?"
+                            placeholder="Selecione o candidato"
+                            searchPlaceholder="Buscar presidente..."
+                            options={candidates.presidentSecondRound?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
+                            {...field}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                  <Controller
-                    name="stateDeputyVote"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        label="Deputado Estadual"
-                        placeholder="Selecione o candidato"
-                        searchPlaceholder="Buscar deputado estadual..."
-                        options={candidates.stateDeputy.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
-                        {...field}
+                      <Controller
+                        name="governorWinnerPrediction"
+                        control={control}
+                        render={({ field }) => (
+                          <SearchableSelect
+                            label="Independente do seu voto para governador, qual destes candidatos você acredita que irá vencer as eleições?"
+                            placeholder="Selecione o candidato"
+                            searchPlaceholder="Buscar governador..."
+                            options={candidates.governorSecondRound?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
+                            {...field}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                  <Controller
-                    name="stateDeputyReelectionRejection"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableSelect
-                        label="Dos atuais candidatos a deputado estadual e que estão disputando a reeleição, qual deles você não votaria?"
-                        placeholder="Selecione o candidato que NÃO votaria"
-                        searchPlaceholder="Buscar deputado estadual em reeleição para rejeição..."
-                        options={candidates.stateDeputyReelection?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
-                        {...field}
-                      />
-                    )}
-                  />
+                    </div>
+                  </div>
+                )}
                 </div>
               </div>
 

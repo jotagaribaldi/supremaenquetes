@@ -15,6 +15,8 @@ export interface Survey {
   title: string;
   tenantId: string;
   tenant?: Tenant;
+  state?: string;
+  type: number;
   createdAt: string;
   updatedAt: string;
   _count?: {

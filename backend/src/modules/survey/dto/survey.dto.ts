@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUUID, Length } from 'class-validator';
+import { IsString, IsOptional, IsUUID, Length, IsInt, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateSurveyDto {
@@ -15,6 +15,13 @@ export class CreateSurveyDto {
   @IsOptional()
   @Length(2, 2, { message: 'Estado deve ter 2 caracteres (UF)' })
   state?: string;
+
+  @ApiProperty({ example: 1, description: 'Tipo da enquete: 1 = 1º turno, 2 = 2º turno', required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(2)
+  type?: number;
 }
 
 export class UpdateSurveyDto {
@@ -27,4 +34,11 @@ export class UpdateSurveyDto {
   @IsOptional()
   @Length(2, 2, { message: 'Estado deve ter 2 caracteres (UF)' })
   state?: string;
+
+  @ApiProperty({ example: 1, description: 'Tipo da enquete: 1 = 1º turno, 2 = 2º turno', required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(2)
+  type?: number;
 }

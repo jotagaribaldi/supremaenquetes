@@ -76,6 +76,7 @@ async function main() {
           federationName,
           situation,
           email,
+          secondRound: false,
         },
       });
       imported++;

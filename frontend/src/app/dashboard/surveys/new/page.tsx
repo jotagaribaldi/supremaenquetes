@@ -44,9 +44,15 @@ const BRAZILIAN_STATES = [
   { value: 'TO', label: 'Tocantins' },
 ];
 
+const SURVEY_TYPES = [
+  { value: '1', label: '1º Turno (Tipo 1)' },
+  { value: '2', label: '2º Turno (Tipo 2)' },
+];
+
 const surveySchema = z.object({
   title: z.string().min(3, 'Título deve ter pelo menos 3 caracteres').max(255),
   state: z.string().length(2, 'Estado é obrigatório'),
+  type: z.string().refine(v => v === '1' || v === '2', 'Selecione o tipo de enquete'),
 });
 
 type SurveyForm = z.infer<typeof surveySchema>;
@@ -63,7 +69,7 @@ export default function NewSurveyPage() {
     formState: { errors },
   } = useForm<SurveyForm>({
     resolver: zodResolver(surveySchema),
-    defaultValues: { title: '' },
+    defaultValues: { title: '', type: '1' },
   });
 
   const onSubmit = async (data: SurveyForm) => {
@@ -74,6 +80,7 @@ export default function NewSurveyPage() {
       await surveyApi.create({
         title: data.title,
         state: data.state,
+        type: parseInt(data.type, 10),
         tenantId: user?.tenantId,
       });
       router.push('/dashboard/surveys');
@@ -121,6 +128,14 @@ export default function NewSurveyPage() {
               {...register('state')}
             />
 
+            <Select
+              label="Tipo da Enquete"
+              placeholder="Selecione o tipo"
+              options={SURVEY_TYPES}
+              error={errors.type?.message}
+              {...register('type')}
+            />
+
             <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
               <h4 className="font-medium text-gray-900 mb-2">Campos que serão coletados automaticamente:</h4>
               <ul className="space-y-1 text-sm text-gray-600">
@@ -129,6 +144,8 @@ export default function NewSurveyPage() {
                 <li>• Faixa etária (16-24, 25-34, 35-44, 45-59, 60+)</li>
                 <li>• Escolaridade (Fundamental, Médio, Superior)</li>
                 <li>• Votos para: Governador, Presidente, Senador, Dep. Estadual, Dep. Federal</li>
+                <li>• Tipo 1 (1º turno): Rejeição Gov/Pres, 2 votos Senador, Dep. Federal, Dep. Estadual reeleição</li>
+                <li>• Tipo 2 (2º turno): Previsão vencedor Presidente e Governador (confiança)</li>
                 <li>• IP do usuário</li>
                 <li>• Geolocalização (latitude/longitude via navegador)</li>
               </ul>
