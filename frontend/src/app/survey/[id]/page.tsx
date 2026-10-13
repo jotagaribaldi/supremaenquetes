@@ -402,7 +402,7 @@ export default function PublicSurveyPage() {
                         label="Governador (voto)"
                         placeholder="Selecione o candidato"
                         searchPlaceholder="Buscar governador..."
-                        options={candidates.governor.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
+                        options={(isType2 ? candidates.governorSecondRound : candidates.governor).map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                         {...field}
                       />
                     )}
@@ -435,7 +435,7 @@ export default function PublicSurveyPage() {
                       label="Presidente (voto)"
                       placeholder="Selecione o candidato"
                       searchPlaceholder="Buscar presidente..."
-                      options={candidates.president?.map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` })) || []}
+                      options={(isType2 ? (candidates.presidentSecondRound || []) : (candidates.president || [])).map(c => ({ value: c.urnName, label: `${c.candidateNumber} - ${c.urnName} (${c.partyAcronym})` }))}
                       {...field}
                     />
                   )}
